@@ -1,9 +1,21 @@
 <template>
   <div id="app">
-    <h1>Vue-TypeScript</h1>
+    <h1 class="text">Vue-TypeScript</h1>
     <!-- 根路由出口 -->
     <router-view/>
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<script lang="ts">
+import Vue from 'vue'
+
+export default Vue.extend({
+  name: 'App'
+})
+</script>
+
+<style lang="scss" scoped>
+  .text {
+    color: $warning-color
+  }
+</style>
