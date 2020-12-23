@@ -19,6 +19,16 @@ function redirectLogin () {
   })
 }
 
+function refreshToken () {
+  return axios.create()({
+    method: 'POST',
+    url: '/front/user/refresh_token',
+    data: qs.stringify({
+      refreshtoken: store.state.user.refresh_token
+    })
+  })
+}
+
 // 请求拦截器
 request.interceptors.request.use(function (config) {
   const { user } = store.state
@@ -31,6 +41,8 @@ request.interceptors.request.use(function (config) {
 })
 
 // 响应拦截器
+let isRfreshing = false // 控制刷新 token 的状态
+let requests: any[] = [] // 存储刷新 token 期间过来的 401 请求
 request.interceptors.response.use(function (response) {
   return response
 }, async function (error) {
@@ -46,20 +58,37 @@ request.interceptors.response.use(function (response) {
         redirectLogin()
         return Promise.reject(error)
       }
-      // 尝试刷新获取新的 token
-      try {
-        const { data } = await axios.create({
-          method: 'POST',
-          url: '/front/user/refresh_token',
-          data: qs.stringify({
-            refreshtoken: store.state.user.refresh_token
-          })
+
+      // 尝试刷新 token
+      if (!isRfreshing) {
+        isRfreshing = true // 开启刷新状态
+        // 尝试刷新获取新的 token
+        return refreshToken().then(res => {
+          if (!res.data.success) {
+            throw new Error('刷新 Token 失败')
+          }
+
+          // 刷新 token 成功了
+          store.commit('setUser', res.data.content)
+          // 把 requests 队列中的请求重新发出去
+          requests.forEach(cb => cb())
+          requests = []
+          return request(error.config)
+        }).catch(err => {
+          store.commit('setUser', null)
+          redirectLogin()
+          return Promise.reject(err)
+        }).finally(() => {
+          isRfreshing = false
         })
-        console.log(data)
-      } catch (err) {
-        redirectLogin()
-        return Promise.reject(err)
       }
+
+      // 刷新状态下，把请求挂起到 requests 数组中
+      return new Promise(resolve => {
+        requests.push(() => {
+          resolve(request(error.config))
+        })
+      })
     } else if (status === 403) {
       Message.error('没有权限，请联系管理员')
     } else if (status === 404) {
