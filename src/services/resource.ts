@@ -4,11 +4,7 @@
 
 import request from '@/utils/request'
 
-interface GetResourcePages {
-  name: string;
-  url: string;
-}
-export const getResourcePages = (data: GetResourcePages) => {
+export const getResourcePages = (data: any) => {
   return request({
     method: 'POST',
     url: '/boss/resource/getResourcePages',

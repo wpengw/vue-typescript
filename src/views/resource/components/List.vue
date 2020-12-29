@@ -2,24 +2,34 @@
   <div class="resource-list">
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <el-form :inline="true" :model="formInline" class="demo-form-inline">
-          <el-form-item label="审批人">
-            <el-input v-model="formInline.name" placeholder="审批人"></el-input>
+        <el-form :inline="true" ref="form" :model="form" class="demo-form-inline">
+          <el-form-item prop="name" label="资源名称">
+            <el-input v-model="form.name" placeholder="资源名称"></el-input>
           </el-form-item>
-          <el-form-item label="活动区域">
-            <el-select v-model="formInline.url" placeholder="活动区域">
-              <el-option label="区域一" value="shanghai"></el-option>
-              <el-option label="区域二" value="beijing"></el-option>
+          <el-form-item prop="url" label="资源路径">
+            <el-input v-model="form.url" placeholder="资源路径"></el-input>
+          </el-form-item>
+          <el-form-item prop="categoryId" label="资源类型">
+            <el-select v-model="form.categoryId" clearable placeholder="资源类型">
+              <el-option
+                v-for="item in resouceCategories"
+                :key="item.id"
+                :value="item.id"
+                :label="item.name"
+              ></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="onSubmit">查询</el-button>
+            <el-button type="primary" :disabled="isLoading" @click="onReset">重置</el-button>
+            <el-button type="primary" :disabled="isLoading" @click="onSubmit">查询</el-button>
           </el-form-item>
         </el-form>
       </div>
       <el-table
         :data="resources"
-        style="width: 100%;margin-bottom: 20px">
+        v-loading="isLoading"
+        style="width: 100%;margin-bottom: 20px"
+      >
         <el-table-column
           type="index"
           label="编号"
@@ -62,11 +72,12 @@
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-sizes="[100, 200, 300, 400]"
-        :page-size="100"
+        :current-page.sync="form.current"
+        :page-sizes="[10, 20, 30, 40]"
+        :page-size="form.size"
+        :disabled="isLoading"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="400">
+        :total="total">
       </el-pagination>
     </el-card>
   </div>
@@ -74,31 +85,46 @@
 <script lang="ts">
 import Vue from 'vue'
 import { getResourcePages } from '@/services/resource'
+import { getResourceCategoryies } from '@/services/resource-category'
+import { Form } from 'element-ui'
 
 export default Vue.extend({
   name: 'ResourceList',
   data () {
     return {
+      isLoading: true,
       resources: [],
-      formInline: {
+      form: {
         name: '',
-        url: ''
+        url: '',
+        categoryId: '',
+        current: 1,
+        size: 10
       },
-      currentPage: 5
+      total: 0,
+      resouceCategories: [] // 资源分类列表
     }
   },
   created () {
     this.loadResources()
+    this.loadResourceCategories()
   },
   methods: {
+    async loadResourceCategories () {
+      const { data } = await getResourceCategoryies()
+      this.resouceCategories = data.data
+    },
     async loadResources () {
       try {
-        const { data } = await getResourcePages(this.formInline)
-        console.log(data)
+        this.isLoading = true
+        const { data } = await getResourcePages(this.form)
         this.resources = data.data.records
+        this.total = data.data.total
       } catch (err) {
         console.log(err)
         this.$message(err)
+      } finally {
+        this.isLoading = false
       }
     },
     handleEdit (item: any) {
@@ -108,13 +134,22 @@ export default Vue.extend({
       console.log(item)
     },
     handleSizeChange (val: number) {
-      console.log(`每页 ${val} 条`)
+      this.form.size = val
+      this.form.current = 1
+      this.loadResources()
     },
     handleCurrentChange (val: number) {
-      console.log(`当前页: ${val}`)
+      this.form.current = val
+      this.loadResources()
     },
     onSubmit () {
-      console.log('submit!')
+      this.form.current = 1
+      this.loadResources()
+    },
+    onReset () {
+      (this.$refs.form as Form).resetFields()
+      this.form.current = 1
+      this.loadResources()
     }
   }
 })
