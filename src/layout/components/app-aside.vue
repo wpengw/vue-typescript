@@ -22,7 +22,7 @@
           <i class="el-icon-setting"></i>
           <span slot="title">菜单管理</span>
         </el-menu-item>
-        <el-menu-item index="resource">
+        <el-menu-item index="/resource">
           <i class="el-icon-setting"></i>
           <span slot="title">资源管理</span>
         </el-menu-item>
@@ -31,20 +31,20 @@
         <i class="el-icon-menu"></i>
         <span slot="title">课程管理</span>
       </el-menu-item>
-      <el-menu-item index="user">
+      <el-menu-item index="/user">
         <i class="el-icon-document"></i>
         <span slot="title">用户管理</span>
       </el-menu-item>
-      <el-submenu index="advert">
+      <el-submenu index="/advert">
         <template slot="title">
           <i class="el-icon-location"></i>
           <span>广告管理</span>
         </template>
-        <el-menu-item index="advert">
+        <el-menu-item index="/advert">
           <i class="el-icon-setting"></i>
           <span slot="title">广告列表</span>
         </el-menu-item>
-        <el-menu-item index="advert-space">
+        <el-menu-item index="/advert-space">
           <i class="el-icon-setting"></i>
           <span slot="title">广告位列表</span>
         </el-menu-item>
